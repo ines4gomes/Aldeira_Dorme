@@ -1,0 +1,176 @@
+{
+  "app_name": "Aldeia Dorme",
+  "personality": "6 Glass / Luxe DARK",
+  "personality_one_liner": "A cinematic, atmospheric, and tension-filled experience designed for candle-lit party gaming, relying on deep shadows, blood red, and antique gold accents.",
+  "color": {
+    "surface": "#09090C",
+    "onSurface": "#EAEAEB",
+    "surfaceSecondary": "#17171E",
+    "onSurfaceSecondary": "#B0B0B5",
+    "surfaceTertiary": "#23232D",
+    "onSurfaceTertiary": "#8A8A93",
+    "surfaceInverse": "#F5F5F7",
+    "onSurfaceInverse": "#09090C",
+    "brand": "#850012",
+    "brandPrimary": "#D4AF37",
+    "onBrandPrimary": "#1A1400",
+    "brandSecondary": "#B80019",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#332211",
+    "onBrandTertiary": "#EAEAEB",
+    "success": "#2E7D32",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F57F17",
+    "onWarning": "#3E2723",
+    "error": "#D32F2F",
+    "onError": "#FFFFFF",
+    "info": "#1976D2",
+    "onInfo": "#FFFFFF",
+    "border": "#23232D",
+    "borderStrong": "#3A3A46",
+    "divider": "#17171E"
+  },
+  "typography": {
+    "displayFontFamily": "Fraunces",
+    "textFontFamily": "Switzer",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24,
+      "3xl": 32,
+      "4xl": 48
+    }
+  },
+  "spacing": {
+    "rule": "Generous vertical breathing room for dramatic text pacing. Use lg/xl between narrative text and lists. Safe-area clearance at the bottom for all sticky CTAs.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "0",
+  "navigation": "stack_only",
+  "icon_set": "MaterialCommunityIcons",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use heavy glass with translucent tint for the private role reveal card.",
+      "Use glass for the sticky narrator controls over the player list.",
+      "Use glass for the BottomSheet revealing player roles to the narrator."
+    ],
+    "dont's": [
+      "Don't blur dense lists like the player voting list.",
+      "Don't use glass on form inputs."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Setup",
+      "purpose": "Narrator enters the number of players to start the game.",
+      "states": {
+        "loading": "Centered gold spinner",
+        "empty": "N/A",
+        "error": "Standard error toast"
+      },
+      "layout": "Full-bleed background image (blood moon) with vertical gradient scrim (transparent to 90% surface at bottom). Center content: Large dramatic display typography 'Aldeia Dorme'. A sleek stepper or numpad for player count (Max 30). Sticky primary CTA 'Iniciar Jogo' pinned to bottom safe area."
+    },
+    {
+      "name": "CardDistribution",
+      "purpose": "Pass-the-phone loop where each player enters their name and secretly views their role.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "Error if name is empty"
+      },
+      "layout": "State machine screen. State 1: 'Pass the phone to the next player' (Big text, CTA 'Estou pronto'). State 2: Input name -> CTA 'Ver Carta'. State 3: Private Reveal -> Heavy glass card centered on screen. Top: 'O seu papel é...', Center: Huge MaterialCommunityIcons icon (e.g. 'wolf' for Lobo, 'shield' for Protetor) in brandPrimary, Role Name in Display Font. Bottom sticky CTA: 'ESCONDER CARTA' (must press). Screen resets until all players are assigned."
+    },
+    {
+      "name": "NarratorDashboard",
+      "purpose": "Master list of all players and their living status, exclusively for the narrator.",
+      "states": {
+        "loading": "Skeleton list",
+        "empty": "N/A",
+        "error": "Retry button"
+      },
+      "layout": "Dark atmospheric list. Each row shows player name. Alive = crisp white text, Dead = onSurfaceTertiary with strikethrough. Tapping a row opens a Gorhom BottomSheet (glassmorphism) showing the player's secret role (in case narrator forgets). Bottom of screen has a floating glass sticky container with 'Iniciar Noite' primary CTA."
+    },
+    {
+      "name": "NightScript",
+      "purpose": "Interactive step-by-step guide for the narrator during the night phase.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Pager or step-based flow. Each step corresponds to a role waking up (e.g., 'Os Lobos acordam'). Large dramatic display text for the script. Below it, a list of selectable alive players if the role requires a target (e.g., victim selection). 'Confirmar' CTA advances to the next role's step. Uses dark forest background with heavy bottom scrim."
+    },
+    {
+      "name": "DayResolution",
+      "purpose": "Summarizes the night's events and handles the village vote elimination.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Top section: 'A ALDEIA ACORDA' in display font, followed by summary (e.g., 'Inês was killed'). Bottom section: List of remaining alive players for voting. Narrator selects the eliminated player. Sticky CTA: 'Confirmar Eliminação'. Updates status and returns to NarratorDashboard."
+    },
+    {
+      "name": "WinScreen",
+      "purpose": "Announces the victorious team.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Full-bleed background. Lobos win: Blood moon background, red tint. Aldeia wins: Serene landscape or brightened text. Massive centered display text 'Lobos Vencem' or 'Aldeia Vence'. 'Novo Jogo' CTA at bottom."
+    }
+  ],
+  "images": {
+    "blood_moon_bg": {
+      "url": "https://images.unsplash.com/photo-1532771098148-525cefe10c23?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwyfHxyZWQlMjBtb29uJTIwZGFyayUyMG5pZ2h0fGVufDB8fHx8MTc4NjgzMTkyMnww&ixlib=rb-4.1.0&q=85",
+      "alt": "Ominous red blood moon in a dark night sky"
+    },
+    "dark_forest_bg": {
+      "url": "https://images.unsplash.com/photo-1630695230041-8909e3204778?crop=entropy&cs=srgb&fm=jpg&ixid=M3wNjAzMjV8MHwxfHNlYXJjaHwxfHxkYXJrJTIwZm9yZXN0JTIwbmlnaHQlMjBmb2d8ZW58MHx8fHwxNzg2ODMxOTE3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Atmospheric dark and foggy forest"
+    }
+  },
+  "haptics": {
+    "primary_button_press": "impactMedium",
+    "role_reveal": "notificationSuccess",
+    "hide_card": "impactHeavy",
+    "player_eliminated": "notificationWarning",
+    "night_step_advance": "selection"
+  },
+  "instructions_to_main_agent": [
+    "Use Personality 6 (Glass / Luxe DARK) for a highly cinematic, tension-filled app. Rely on Fraunces for display text and deep, near-black backgrounds.",
+    "Implement the gradient scrim pattern (transparent to 80-90% surface) over the blood_moon_bg and dark_forest_bg to ensure text readability.",
+    "For the role icons (Lobo, Caçador, Profeta, etc.), use MaterialCommunityIcons (e.g., 'wolf', 'bow-arrow', 'eye', 'tooth', 'shield', 'account-multiple'). Do NOT use emojis. Render these icons large in brandPrimary (Gold).",
+    "In CardDistribution, the 'ESCONDER CARTA' step is critical. Build it as a state within the screen that forces the user to tap to hide the card before proceeding to the next player.",
+    "In NarratorDashboard, the player list is the core UI. Dead players should be visibly muted (strikethrough and onSurfaceTertiary). Tap a row to pop a glassmorphism BottomSheet showing their role.",
+    "NightScript should be a guided flow. Keep the layout dramatic: big text 'A aldeia dorme...', then select a player if an action is needed. Use clear sticky CTAs."
+  ]
+}
