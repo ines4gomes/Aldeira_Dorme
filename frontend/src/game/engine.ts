@@ -62,17 +62,25 @@ export function resolveNight(
   const protectedId = night.protetorTarget;
   const deaths = new Set<string>();
   const summary: string[] = [];
+  const roleOf = (id: string | null) =>
+    next.find((p) => p.id === id)?.role ?? "Aldeão";
+
+  summary.push(
+    "E a manhã voltou... e muita coisa aconteceu esta noite. Vamos ver.",
+  );
 
   // Wolves
   if (night.wolvesTarget) {
     const name = nameOf(next, night.wolvesTarget);
     if (protectedId && protectedId === night.wolvesTarget) {
       summary.push(
-        `Os Lobos atacaram ${name}, mas o Protetor protegeu-o. Sobreviveu!`,
+        `Os Lobos rondaram ${name} na escuridão... mas o Protetor velou por ele(a) esta noite. ${name} sobreviveu!`,
       );
     } else {
       deaths.add(night.wolvesTarget);
-      summary.push(`Os Lobos mataram ${name}.`);
+      summary.push(
+        `Os Lobos circundaram ${name} e acabaram por matá-lo(a). E quem era ${name}? Afinal, ${name} era... ${roleOf(night.wolvesTarget)}.`,
+      );
     }
   }
 
@@ -83,15 +91,17 @@ export function resolveNight(
     if (hc.wasWolf) {
       if (protectedId && protectedId === hc.targetId) {
         summary.push(
-          `O Caçador acertou em ${name} (Lobo), mas estava protegido.`,
+          `O Caçador acertou em ${name}, um Lobo! Mas ${name} estava protegido e escapou.`,
         );
       } else {
         deaths.add(hc.targetId);
-        summary.push(`O Caçador matou ${name}, que era um Lobo!`);
+        summary.push(
+          `O Caçador procurou e procurou, e a sua mira caiu sobre ${name}... e desta vez acertou! ${name} era mesmo um Lobo.`,
+        );
       }
     } else {
       summary.push(
-        `O Caçador apontou para ${name}, que não era Lobo. Nada aconteceu.`,
+        `O Caçador procurou e procurou, e a sua mira caiu sobre ${name}... será que acertou no Lobo? Infelizmente não — ${name} era apenas ${roleOf(hc.targetId)}.`,
       );
     }
   });
@@ -102,7 +112,7 @@ export function resolveNight(
   deaths.forEach((id) => {
     if (!beforeTwins.has(id)) {
       summary.push(
-        `${nameOf(next, id)} morreu de desgosto — o seu Gémeo morreu.`,
+        `E como eram Gémeos, ao perder um... ${nameOf(next, id)} não resistiu e partiu também. Morreram os dois.`,
       );
     }
   });
@@ -118,18 +128,32 @@ export function resolveNight(
   });
 
   if (deaths.size === 0 && !night.wolvesTarget) {
-    summary.push("A noite foi calma. Ninguém morreu.");
-  } else if (deaths.size === 0) {
-    // attack happened but everyone survived
-    if (summary.length === 0) summary.push("Ninguém morreu esta noite.");
+    summary.push("A noite foi estranhamente calma. Ninguém morreu.");
   }
 
-  // Silenced note
+  // Profeta — revelado a todos na reunião da manhã
+  if (night.profetaTarget) {
+    summary.push(
+      night.profetaIsWolf
+        ? "O Profeta espreitou nas sombras esta noite... e acertou!"
+        : "O Profeta espreitou nas sombras esta noite... mas desta vez falhou.",
+    );
+  }
+
+  // Silenced note — um jogador protegido também não pode ser calado.
   if (night.dentistaTarget) {
     const p = next.find((x) => x.id === night.dentistaTarget);
-    if (p && p.alive) {
-      night.silencedId = p.id;
-      summary.push(`${p.name} foi silenciado e fica calado nesta ronda.`);
+    if (p) {
+      if (protectedId && protectedId === night.dentistaTarget) {
+        summary.push(
+          `A Dentista tentou calar ${p.name}... mas não se exaltem: o Protetor protegeu-o. ${p.name} pode falar à vontade.`,
+        );
+      } else if (p.alive) {
+        night.silencedId = p.id;
+        summary.push(
+          `A Dentista, cansada de ouvir ${p.name}, calou-o(a). Não vai poder falar nesta ronda.`,
+        );
+      }
     }
   }
 

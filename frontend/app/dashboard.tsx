@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GameBackground from "@/src/components/GameBackground";
 import PrimaryButton from "@/src/components/PrimaryButton";
 import RoleCard from "@/src/components/RoleCard";
+import RoleIcon from "@/src/components/RoleIcon";
 import { useGame } from "@/src/game/GameContext";
-import { ROLE_META } from "@/src/game/roles";
 import { Player } from "@/src/game/types";
 import { colors, font, radius, spacing } from "@/src/theme";
 
@@ -52,6 +52,13 @@ export default function Dashboard() {
           <Text style={styles.title}>Jogadores</Text>
         </View>
         <Pressable
+          testID="history-button"
+          onPress={() => router.push("/history")}
+          style={({ pressed }) => [styles.endBtn, pressed && styles.pressed]}
+        >
+          <MaterialCommunityIcons name="history" size={22} color={colors.onSurfaceSecondary} />
+        </Pressable>
+        <Pressable
           testID="end-game-button"
           onPress={() => setConfirmEnd(true)}
           style={({ pressed }) => [styles.endBtn, pressed && styles.pressed]}
@@ -62,7 +69,7 @@ export default function Dashboard() {
 
       <View style={styles.statsRow}>
         <View style={styles.statPill}>
-          <MaterialCommunityIcons name="heart-pulse" size={16} color={colors.success} />
+          <MaterialCommunityIcons name="heart-pulse" size={16} color={colors.gold} />
           <Text style={styles.statText}>{alive.length} vivos</Text>
         </View>
         <View style={styles.statPill}>
@@ -84,7 +91,6 @@ export default function Dashboard() {
           Toca num jogador para ver a carta (caso alguém se esqueça do seu papel).
         </Text>
         {sorted.map((p) => {
-          const meta = ROLE_META[p.role];
           return (
             <Pressable
               key={p.id}
@@ -96,10 +102,10 @@ export default function Dashboard() {
                 pressed && styles.pressed,
               ]}
             >
-              <MaterialCommunityIcons
-                name={meta.icon as any}
+              <RoleIcon
+                role={p.role}
                 size={24}
-                color={p.alive ? meta.color : colors.onSurfaceTertiary}
+                color={p.alive ? undefined : colors.onSurfaceTertiary}
               />
               <View style={styles.flex}>
                 <Text
@@ -168,7 +174,7 @@ export default function Dashboard() {
         <View style={styles.modalBackdrop}>
           <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={styles.confirmCard}>
-            <MaterialCommunityIcons name="alert" size={40} color={colors.warning} />
+            <MaterialCommunityIcons name="alert" size={40} color={colors.gold} />
             <Text style={styles.confirmTitle}>Terminar o jogo?</Text>
             <Text style={styles.confirmBody}>
               Isto apaga a partida atual e todos os dados. Não é reversível.
@@ -255,12 +261,12 @@ const styles = StyleSheet.create({
   roleText: { color: colors.onSurfaceSecondary, fontSize: font.sm, marginTop: 2 },
   deadSub: { color: colors.onSurfaceTertiary },
   aliveBadge: {
-    backgroundColor: "rgba(46,125,50,0.2)",
+    backgroundColor: "rgba(212,175,55,0.16)",
     borderRadius: radius.pill,
     paddingVertical: 3,
     paddingHorizontal: spacing.sm,
   },
-  aliveBadgeText: { color: colors.success, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+  aliveBadgeText: { color: colors.gold, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   footer: {
     position: "absolute",
     left: 0,

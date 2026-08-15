@@ -19,7 +19,7 @@ import { useGame } from "@/src/game/GameContext";
 import { Role } from "@/src/game/types";
 import { colors, font, radius, spacing } from "@/src/theme";
 
-type Phase = "pass" | "input" | "reveal";
+type Phase = "pass" | "input" | "reveal" | "handover";
 
 export default function Deal() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function Deal() {
     setName("");
     setRevealed(null);
     if (isLast) {
-      router.replace("/dashboard");
+      setPhase("handover");
     } else {
       setPhase("pass");
     }
@@ -137,6 +137,27 @@ export default function Deal() {
                 onPress={hideCard}
                 variant="crimson"
                 testID="hide-card-button"
+              />
+            </View>
+          </View>
+        )}
+        {phase === "handover" && (
+          <View style={styles.centered}>
+            <MaterialCommunityIcons
+              name="account-tie"
+              size={72}
+              color={colors.gold}
+            />
+            <Text style={styles.bigTitle}>Cartas entregues!</Text>
+            <Text style={styles.bodyText}>
+              Todos já viram o seu papel. Passa o telemóvel ao narrador — a
+              partir daqui, é ele quem guia o jogo.
+            </Text>
+            <View style={styles.ctaWrap}>
+              <PrimaryButton
+                label="Sou o narrador"
+                onPress={() => router.replace("/dashboard")}
+                testID="narrator-confirm-button"
               />
             </View>
           </View>

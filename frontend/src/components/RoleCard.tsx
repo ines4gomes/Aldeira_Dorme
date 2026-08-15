@@ -1,10 +1,10 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { StyleSheet, Text, View } from "react-native";
 
 import { colors, font, radius, spacing } from "@/src/theme";
 import { ROLE_META } from "@/src/game/roles";
 import { Role } from "@/src/game/types";
+import RoleIcon from "./RoleIcon";
 
 interface Props {
   name: string;
@@ -29,11 +29,7 @@ export default function RoleCard({ name, role, compact }: Props) {
             compact && styles.iconWrapCompact,
           ]}
         >
-          <MaterialCommunityIcons
-            name={meta.icon as any}
-            size={compact ? 48 : 84}
-            color={meta.color}
-          />
+          <RoleIcon role={role} size={compact ? 48 : 84} color={meta.color} />
         </View>
         <Text
           style={[styles.roleName, compact && styles.roleNameCompact]}

@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import GameBackground from "@/src/components/GameBackground";
 import PrimaryButton from "@/src/components/PrimaryButton";
+import RoleIcon from "@/src/components/RoleIcon";
+import WolfIcon from "@/src/components/WolfIcon";
 import { useGame } from "@/src/game/GameContext";
 import { ROLE_META } from "@/src/game/roles";
 import { colors, font, radius, spacing } from "@/src/theme";
@@ -62,7 +64,7 @@ export default function Win() {
             const meta = ROLE_META[p.role];
             return (
               <View key={p.id} style={styles.row}>
-                <MaterialCommunityIcons name={meta.icon as any} size={22} color={meta.color} />
+                <RoleIcon role={p.role} size={22} color={meta.color} />
                 <Text style={[styles.name, !p.alive && styles.dead]} numberOfLines={1}>
                   {p.name}
                 </Text>

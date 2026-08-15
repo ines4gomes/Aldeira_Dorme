@@ -12,6 +12,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import GameBackground from "@/src/components/GameBackground";
 import PrimaryButton from "@/src/components/PrimaryButton";
+import RoleIcon from "@/src/components/RoleIcon";
+import WolfIcon from "@/src/components/WolfIcon";
 import { useGame } from "@/src/game/GameContext";
 import { ROLE_META, compositionSummary } from "@/src/game/roles";
 import { GameStatus } from "@/src/game/types";
@@ -65,7 +67,7 @@ export default function Setup() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <MaterialCommunityIcons name="paw" size={44} color={colors.gold} />
+          <WolfIcon size={52} color={colors.gold} />
           <Text style={styles.kicker}>O JOGO DA</Text>
           <Text style={styles.title}>Aldeia{"\n"}Dorme</Text>
           <Text style={styles.subtitle}>
@@ -105,11 +107,7 @@ export default function Setup() {
             const meta = ROLE_META[row.role];
             return (
               <View key={row.role} style={styles.previewRow}>
-                <MaterialCommunityIcons
-                  name={meta.icon as any}
-                  size={22}
-                  color={meta.color}
-                />
+                <RoleIcon role={row.role} size={22} color={meta.color} />
                 <Text style={styles.previewName}>{row.role}</Text>
                 <Text style={styles.previewCount}>×{row.count}</Text>
               </View>

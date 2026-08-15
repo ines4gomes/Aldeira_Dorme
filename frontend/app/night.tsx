@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GameBackground from "@/src/components/GameBackground";
 import PlayerPicker from "@/src/components/PlayerPicker";
 import PrimaryButton from "@/src/components/PrimaryButton";
+import WolfIcon from "@/src/components/WolfIcon";
 import { useGame } from "@/src/game/GameContext";
 import { buildNightSteps } from "@/src/game/engine";
 import { Player } from "@/src/game/types";
@@ -82,7 +83,7 @@ export default function Night() {
           title: "O CAÇADOR ACORDA",
           subtitle: hunter ? `Caçador: ${hunter.name}` : undefined,
           instruction:
-            "Aponta para uma pessoa que acredita ser Lobo. Se for Lobo, morre.",
+            "O Caçador vai tentar a sua sorte. Escolhe quem ele acredita ser Lobo — se acertar, o Lobo cai.",
           icon: "bow-arrow",
           pool: alive.filter((p) => p.id !== step.actorId),
           isProfeta: false,
@@ -94,7 +95,7 @@ export default function Night() {
           kind: "profeta",
           title: "O PROFETA ACORDA",
           instruction:
-            "Aponta para uma pessoa para descobrir se é Lobo. O resultado será revelado a seguir.",
+            "O Profeta aponta para quem acha que é Lobo. Será que acertou? Escolhe a pessoa e revela o resultado.",
           icon: "eye",
           pool: alive.filter((p) => p.id !== profeta?.id),
           isProfeta: true,
@@ -106,7 +107,7 @@ export default function Night() {
           kind: "dentista",
           title: "O DENTISTA ACORDA",
           instruction:
-            "Escolhe uma pessoa para ficar calada na ronda seguinte.",
+            "A Dentista escolhe uma pessoa para ficar calada na ronda seguinte.",
           icon: "tooth",
           pool: alive.filter((p) => p.id !== dentista?.id),
           isProfeta: false,
@@ -117,7 +118,7 @@ export default function Night() {
           kind: "protetor",
           title: "O PROTETOR ACORDA",
           instruction:
-            "Escolhe quem queres proteger esta noite. Podes proteger-te a ti próprio.",
+            "O Protetor escolhe quem quer proteger esta noite. Pode proteger-se a si próprio.",
           icon: "shield-half-full",
           pool: alive,
           isProfeta: false,
@@ -218,7 +219,11 @@ export default function Night() {
 
         <View style={styles.stepHeader}>
           <View style={[styles.iconCircle, { borderColor: colors.gold }]}>
-            <MaterialCommunityIcons name={view.icon as any} size={40} color={colors.gold} />
+            {step.kind === "lobos" ? (
+              <WolfIcon size={40} color={colors.gold} />
+            ) : (
+              <MaterialCommunityIcons name={view.icon as any} size={40} color={colors.gold} />
+            )}
           </View>
           <Text style={styles.stepTitle}>{view.title}</Text>
           {view.subtitle ? <Text style={styles.stepSubtitle}>{view.subtitle}</Text> : null}
@@ -227,25 +232,28 @@ export default function Night() {
 
         {view.isProfeta && showResult ? (
           <View style={styles.resultWrap}>
-            <MaterialCommunityIcons
-              name={targetIsWolf ? "paw" : "shield-check"}
-              size={80}
-              color={targetIsWolf ? colors.crimson : colors.success}
-            />
-            <Text style={styles.resultName}>{nameOf(selectedId)}</Text>
+            {targetIsWolf ? (
+              <WolfIcon size={64} color={colors.gold} />
+            ) : (
+              <MaterialCommunityIcons
+                name="eye-off-outline"
+                size={64}
+                color={colors.onSurfaceTertiary}
+              />
+            )}
             <Text
               style={[
                 styles.resultVerdict,
-                { color: targetIsWolf ? colors.crimson : colors.success },
+                { color: targetIsWolf ? colors.gold : colors.onSurfaceSecondary },
               ]}
               testID="profeta-result"
             >
-              {targetIsWolf ? "É LOBO" : "NÃO É LOBO"}
+              {targetIsWolf ? "O PROFETA ACERTOU" : "O PROFETA FALHOU"}
             </Text>
             <Text style={styles.resultHint}>
               {targetIsWolf
-                ? "O Profeta acertou! Transmite esta informação em segredo."
-                : "O Profeta falhou. Transmite esta informação em segredo."}
+                ? `${nameOf(selectedId)} é mesmo um Lobo. Diz ao Profeta em segredo — e na reunião conta a todos se ele acertou.`
+                : `${nameOf(selectedId)} não é Lobo. Diz ao Profeta em segredo.`}
             </Text>
           </View>
         ) : (
@@ -349,10 +357,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   resultVerdict: {
-    fontSize: font["4xl"],
+    fontSize: font["2xl"],
     fontWeight: "900",
     letterSpacing: 1,
-    marginTop: spacing.xs,
+    marginTop: spacing.lg,
+    textAlign: "center",
   },
   resultHint: {
     color: colors.onSurfaceSecondary,
