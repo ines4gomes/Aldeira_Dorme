@@ -1,14 +1,14 @@
 import { GameState, NightRecord, NightStep, Player, Winner } from "./types";
 
 // ---- Win condition (do NOT change) ----
-// Lobos win when the number of OTHER living characters is LOWER than the
+// Lobos win when the number of OTHER living characters is LOWER OR EQUAL than the
 // number of living Lobos. Aldeia wins when there are no living Lobos.
 export function checkWin(players: Player[]): Winner {
   const alive = players.filter((p) => p.alive);
   const wolves = alive.filter((p) => p.role === "Lobo").length;
   const others = alive.length - wolves;
   if (wolves === 0) return "aldeia";
-  if (others < wolves) return "lobos";
+  if (others <= wolves) return "lobos";
   return null;
 }
 
