@@ -12,6 +12,18 @@ interface Props {
   contentPaddingBottom?: number;
 }
 
+// Mapeia a string da função para o ícone correspondente
+const getRoleIcon = (role?: string) => {
+  switch (role) {
+    case "Lobo": return "paw";
+    case "Caçador": return "bow-arrow";
+    case "Profeta": return "eye";
+    case "Dentista": return "tooth";
+    case "Protetor": return "shield-half-full";
+    default: return "account"; // Aldeão
+  }
+};
+
 // Scrollable list of selectable (alive) players for narrator actions.
 export default function PlayerPicker({
   players,
@@ -45,12 +57,22 @@ export default function PlayerPicker({
               pressed && styles.pressed,
             ]}
           >
-            <Text
-              style={[styles.name, selected && styles.nameSelected]}
-              numberOfLines={1}
-            >
-              {p.name}
-            </Text>
+            <View style={styles.leftContent}>
+              <View style={styles.iconWrapper}>
+                <MaterialCommunityIcons
+                  name={getRoleIcon(p.role)}
+                  size={20}
+                  color={colors.onSurface}
+                />
+              </View>
+              <Text
+                style={[styles.name, selected && styles.nameSelected]}
+                numberOfLines={1}
+              >
+                {p.name}
+              </Text>
+            </View>
+
             {selected ? (
               <MaterialCommunityIcons
                 name="check-circle"
@@ -90,6 +112,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceTertiary,
   },
   pressed: { opacity: 0.85 },
+  leftContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    flex: 1,
+  },
+  iconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceTertiary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   name: { color: colors.onSurface, fontSize: font.lg, fontWeight: "600", flex: 1 },
   nameSelected: { color: colors.gold, fontWeight: "800" },
 });
