@@ -19,7 +19,7 @@ import { ROLE_META, compositionSummary } from "@/src/game/roles";
 import { GameStatus } from "@/src/game/types";
 import { colors, font, radius, spacing } from "@/src/theme";
 
-const MIN = 3;
+const MIN = 5;
 const MAX = 30;
 
 const routeFor: Record<GameStatus, string> = {
