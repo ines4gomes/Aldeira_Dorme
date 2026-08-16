@@ -22,6 +22,7 @@ interface StepView {
   icon: string;
   pool: Player[];
   isProfeta: boolean;
+  wakingNames?: string;
 }
 
 export default function Night() {
@@ -73,8 +74,9 @@ export default function Night() {
           instruction:
             "Os Lobos acordam e escolhem, em silêncio, quem querem matar. Seleciona a vítima.",
           icon: "paw",
-          pool: alive,
+          pool: alive.filter((p) => p.role !== "Lobo"), // Não deixa os lobos matarem lobos
           isProfeta: false,
+          wakingNames: alive.filter((p) => p.role === "Lobo").map((p) => p.name).join(", "),
         };
       case "cacador": {
         const hunter = state.players.find((p) => p.id === step.actorId);
@@ -87,6 +89,7 @@ export default function Night() {
           icon: "bow-arrow",
           pool: alive.filter((p) => p.id !== step.actorId),
           isProfeta: false,
+          wakingNames: hunter ? hunter.name : "",
         };
       }
       case "profeta": {
@@ -99,6 +102,7 @@ export default function Night() {
           icon: "eye",
           pool: alive.filter((p) => p.id !== profeta?.id),
           isProfeta: true,
+          wakingNames: profeta ? profeta.name : "",
         };
       }
       case "dentista": {
@@ -111,9 +115,11 @@ export default function Night() {
           icon: "tooth",
           pool: alive.filter((p) => p.id !== dentista?.id),
           isProfeta: false,
+          wakingNames: dentista ? dentista.name : "",
         };
       }
       default: {
+        const protetor = alive.find((p) => p.role === "Protetor");
         return {
           kind: "protetor",
           title: "O PROTETOR ACORDA",
@@ -122,6 +128,7 @@ export default function Night() {
           icon: "shield-half-full",
           pool: alive,
           isProfeta: false,
+          wakingNames: protetor ? protetor.name : "",
         };
       }
     }
@@ -228,6 +235,15 @@ export default function Night() {
           <Text style={styles.stepTitle}>{view.title}</Text>
           {view.subtitle ? <Text style={styles.stepSubtitle}>{view.subtitle}</Text> : null}
           <Text style={styles.instruction}>{view.instruction}</Text>
+
+          {/* Indicação de quem acorda */}
+          {view.wakingNames ? (
+            <View style={styles.activePlayersBadge}>
+              <Text style={styles.activePlayersLabel}>
+                QUEM ACORDA: <Text style={styles.activePlayersNames}>{view.wakingNames}</Text>
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {view.isProfeta && showResult ? (
@@ -252,8 +268,8 @@ export default function Night() {
             </Text>
             <Text style={styles.resultHint}>
               {targetIsWolf
-                ? `${nameOf(selectedId)} é mesmo um Lobo. Diz ao Profeta em segredo — e na reunião conta a todos se ele acertou.`
-                : `${nameOf(selectedId)} não é Lobo. Diz ao Profeta em segredo.`}
+                ? `${nameOf(null, selectedId)} é mesmo um Lobo. Diz ao Profeta em segredo — e na reunião conta a todos se ele acertou.`
+                : `${nameOf(null, selectedId)} não é Lobo. Diz ao Profeta em segredo.`}
             </Text>
           </View>
         ) : (
@@ -347,6 +363,24 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.sm,
     paddingHorizontal: spacing.sm,
+  },
+  activePlayersBadge: {
+    marginTop: spacing.md,
+    backgroundColor: "rgba(200, 170, 110, 0.15)",
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.gold,
+  },
+  activePlayersLabel: {
+    color: colors.gold,
+    fontSize: font.sm,
+    fontWeight: "700",
+  },
+  activePlayersNames: {
+    color: colors.onSurface,
+    fontWeight: "900",
   },
   pickerWrap: { flex: 1 },
   resultWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
