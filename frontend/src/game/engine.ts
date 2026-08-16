@@ -8,7 +8,7 @@ export function checkWin(players: Player[]): Winner {
   const wolves = alive.filter((p) => p.role === "Lobo").length;
   const others = alive.length - wolves;
   if (wolves === 0) return "aldeia";
-  if (others <= wolves) return "lobos";
+  if (others <= wolves) return "lobos"; // <-- Corrigido para incluir o empate
   return null;
 }
 
@@ -17,9 +17,16 @@ export function livingPlayers(state: GameState): Player[] {
 }
 
 // Builds the ordered night script based on which roles are still alive.
-export function buildNightSteps(players: Player[]): NightStep[] {
+// Adicionada a currentNight para saber quando é a primeira noite (para os Gémeos)
+export function buildNightSteps(players: Player[], currentNight: number = 1): any[] {
   const alive = players.filter((p) => p.alive);
-  const steps: NightStep[] = [];
+  const steps: any[] = [];
+  
+  // Gémeos acordam apenas na primeira noite para se conhecerem
+  if (currentNight === 1 && alive.some((p) => p.role === "Gémeos" || p.twinId)) {
+    steps.push({ kind: "gemeos" });
+  }
+
   if (alive.some((p) => p.role === "Lobo")) steps.push({ kind: "lobos" });
   alive
     .filter((p) => p.role === "Caçador")
@@ -65,6 +72,22 @@ export function resolveNight(
   const roleOf = (id: string | null) =>
     next.find((p) => p.id === id)?.role ?? "Aldeão";
 
+  // Função robusta para verificar se um jogador está protegido, incluindo o seu gémeo
+  const isProt = (id: string | null | undefined) => {
+    if (!id || !protectedId) return false;
+    if (id === protectedId) return true;
+    const target = next.find((p) => p.id === id);
+    if (target && target.twinId === protectedId) return true;
+    const prot = next.find((p) => p.id === protectedId);
+    if (prot && prot.twinId === id) return true;
+    return false;
+  };
+
+  // Grava uma "marca" nos jogadores protegidos para sobreviverem à votação da aldeia no dia seguinte
+  next.forEach(p => {
+    (p as any).isProtectedFromVote = isProt(p.id);
+  });
+
   summary.push(
     "E a manhã voltou... e muita coisa aconteceu esta noite. Vamos ver.",
   );
@@ -72,7 +95,7 @@ export function resolveNight(
   // Wolves
   if (night.wolvesTarget) {
     const name = nameOf(next, night.wolvesTarget);
-    if (protectedId && protectedId === night.wolvesTarget) {
+    if (isProt(night.wolvesTarget)) {
       summary.push(
         `Os Lobos rondaram ${name} na escuridão... mas o Protetor velou por ele(a) esta noite. ${name} sobreviveu!`,
       );
@@ -88,21 +111,22 @@ export function resolveNight(
   night.hunterChoices.forEach((hc) => {
     if (!hc.targetId) return;
     const name = nameOf(next, hc.targetId);
-    if (hc.wasWolf) {
-      if (protectedId && protectedId === hc.targetId) {
-        summary.push(
-          `O Caçador acertou em ${name}, um Lobo! Mas ${name} estava protegido e escapou.`,
-        );
-      } else {
-        deaths.add(hc.targetId);
+    
+    if (isProt(hc.targetId)) {
+      summary.push(
+        `O Caçador atirou em ${name}... mas o Protetor velou por ele(a) e a bala foi desviada! ${name} sobreviveu.`,
+      );
+    } else {
+      deaths.add(hc.targetId); // A morte acontece sempre agora!
+      if (hc.wasWolf) {
         summary.push(
           `O Caçador procurou e procurou, e a sua mira caiu sobre ${name}... e desta vez acertou! ${name} era mesmo um Lobo.`,
         );
+      } else {
+        summary.push(
+          `O Caçador procurou e procurou, e atirou sobre ${name}... mas cometeu um erro terrível. Matou um inocente, que era apenas ${roleOf(hc.targetId)}.`,
+        );
       }
-    } else {
-      summary.push(
-        `O Caçador procurou e procurou, e a sua mira caiu sobre ${name}... será que acertou no Lobo? Infelizmente não — ${name} era apenas ${roleOf(hc.targetId)}.`,
-      );
     }
   });
 
@@ -140,11 +164,11 @@ export function resolveNight(
     );
   }
 
-  // Silenced note — um jogador protegido também não pode ser calado.
+  // Silenced note
   if (night.dentistaTarget) {
     const p = next.find((x) => x.id === night.dentistaTarget);
     if (p) {
-      if (protectedId && protectedId === night.dentistaTarget) {
+      if (isProt(night.dentistaTarget)) {
         summary.push(
           `A Dentista tentou calar ${p.name}... mas não se exaltem: o Protetor protegeu-o. ${p.name} pode falar à vontade.`,
         );
@@ -169,6 +193,15 @@ export function applyVote(
   night: number,
 ): Player[] {
   const next = players.map((p) => ({ ...p }));
+  
+  // Verifica se o alvo foi protegido na noite anterior
+  const target = next.find(x => x.id === targetId);
+  if (target && (target as any).isProtectedFromVote) {
+    // Se está protegido, ninguém morre na votação. Remove a proteção para não ficar invencível.
+    next.forEach(p => { (p as any).isProtectedFromVote = false; });
+    return next;
+  }
+
   const deaths = new Set<string>([targetId]);
   expandTwins(deaths, next);
   deaths.forEach((id) => {
@@ -179,5 +212,8 @@ export function applyVote(
       p.deathCause = "Votação da aldeia";
     }
   });
+  
+  // Remove a proteção no fim do dia
+  next.forEach(p => { (p as any).isProtectedFromVote = false; });
   return next;
 }
