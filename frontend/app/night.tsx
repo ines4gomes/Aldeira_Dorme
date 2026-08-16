@@ -34,9 +34,10 @@ export default function Night() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
 
+  // Passa currentNight para saber se é a noite 1 (para acordar os gémeos)
   const steps = useMemo(
-    () => buildNightSteps(state.players),
-    [state.players],
+    () => buildNightSteps(state.players, state.currentNight),
+    [state.players, state.currentNight],
   );
   const alive = useMemo(
     () => state.players.filter((p) => p.alive),
@@ -74,9 +75,9 @@ export default function Night() {
           instruction:
             "Os Lobos acordam e escolhem, em silêncio, quem querem matar. Seleciona a vítima.",
           icon: "paw",
-          pool: alive.filter((p) => p.role !== "Lobo"), // Não deixa os lobos matarem lobos
+          pool: alive.filter((p) => p.role !== "Lobo"), // Remove os próprios lobos da lista de vítimas
           isProfeta: false,
-          wakingNames: alive.filter((p) => p.role === "Lobo").map((p) => p.name).join(", "),
+          wakingNames: alive.filter(p => p.role === "Lobo").map(p => p.name).join(", "),
         };
       case "cacador": {
         const hunter = state.players.find((p) => p.id === step.actorId);
@@ -85,11 +86,11 @@ export default function Night() {
           title: "O CAÇADOR ACORDA",
           subtitle: hunter ? `Caçador: ${hunter.name}` : undefined,
           instruction:
-            "O Caçador vai tentar a sua sorte. Escolhe quem ele acredita ser Lobo — se acertar, o Lobo cai.",
+            "O Caçador vai tentar a sua sorte. Escolhe quem ele acredita ser Lobo — a vítima cai sempre, quer acerte ou falhe.",
           icon: "bow-arrow",
           pool: alive.filter((p) => p.id !== step.actorId),
           isProfeta: false,
-          wakingNames: hunter ? hunter.name : "",
+          wakingNames: hunter ? hunter.name : undefined,
         };
       }
       case "profeta": {
@@ -102,7 +103,7 @@ export default function Night() {
           icon: "eye",
           pool: alive.filter((p) => p.id !== profeta?.id),
           isProfeta: true,
-          wakingNames: profeta ? profeta.name : "",
+          wakingNames: profeta ? profeta.name : undefined,
         };
       }
       case "dentista": {
@@ -115,7 +116,20 @@ export default function Night() {
           icon: "tooth",
           pool: alive.filter((p) => p.id !== dentista?.id),
           isProfeta: false,
-          wakingNames: dentista ? dentista.name : "",
+          wakingNames: dentista ? dentista.name : undefined,
+        };
+      }
+      case "gemeos": {
+        const gemeos = alive.filter((p) => p.role === "Gémeos" || p.twinId);
+        return {
+          kind: "gemeos",
+          title: "OS GÉMEOS ACORDAM",
+          instruction:
+            "Os Gémeos abrem os olhos e reconhecem-se um ao outro em silêncio.",
+          icon: "account", // Ícone base igual ao dos aldeões comuns
+          pool: [], // Vazia, pois eles não selecionam ninguém
+          isProfeta: false,
+          wakingNames: gemeos.map(p => p.name).join(", "),
         };
       }
       default: {
@@ -128,7 +142,7 @@ export default function Night() {
           icon: "shield-half-full",
           pool: alive,
           isProfeta: false,
-          wakingNames: protetor ? protetor.name : "",
+          wakingNames: protetor ? protetor.name : undefined,
         };
       }
     }
@@ -138,7 +152,9 @@ export default function Night() {
     state.players.find((p) => p.id === selectedId)?.role === "Lobo";
 
   const advance = () => {
-    if (!selectedId) return;
+    // Se houver opções e nenhuma selecionada, não avança. Os gémeos avançam sem seleção.
+    if (view.pool.length > 0 && !selectedId) return;
+    
     Haptics.selectionAsync().catch(() => {});
     const total = steps.length;
     switch (step.kind) {
@@ -169,6 +185,9 @@ export default function Night() {
         break;
       case "dentista":
         confirmStep((c) => ({ ...c, dentistaTarget: selectedId }), total);
+        break;
+      case "gemeos":
+        confirmStep((c) => c, total); // Apenas avança, não regista nada
         break;
       default:
         confirmStep((c) => ({ ...c, protetorTarget: selectedId }), total);
@@ -235,8 +254,8 @@ export default function Night() {
           <Text style={styles.stepTitle}>{view.title}</Text>
           {view.subtitle ? <Text style={styles.stepSubtitle}>{view.subtitle}</Text> : null}
           <Text style={styles.instruction}>{view.instruction}</Text>
-
-          {/* Indicação de quem acorda */}
+          
+          {/* TAG COM QUEM ACORDA */}
           {view.wakingNames ? (
             <View style={styles.activePlayersBadge}>
               <Text style={styles.activePlayersLabel}>
@@ -268,8 +287,8 @@ export default function Night() {
             </Text>
             <Text style={styles.resultHint}>
               {targetIsWolf
-                ? `${nameOf(null, selectedId)} é mesmo um Lobo. Diz ao Profeta em segredo — e na reunião conta a todos se ele acertou.`
-                : `${nameOf(null, selectedId)} não é Lobo. Diz ao Profeta em segredo.`}
+                ? `${nameOf(selectedId)} é mesmo um Lobo. Diz ao Profeta em segredo — e na reunião conta a todos se ele acertou.`
+                : `${nameOf(selectedId)} não é Lobo. Diz ao Profeta em segredo.`}
             </Text>
           </View>
         ) : (
@@ -288,10 +307,12 @@ export default function Night() {
             label={
               view.isProfeta && !showResult
                 ? "Revelar resultado"
+                : view.pool.length === 0
+                ? "Avançar"
                 : "Confirmar"
             }
             onPress={onPrimary}
-            disabled={!selectedId}
+            disabled={view.pool.length > 0 && !selectedId}
             testID="confirm-step-button"
           />
         </View>
