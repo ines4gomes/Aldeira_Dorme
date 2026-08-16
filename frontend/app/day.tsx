@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import GameBackground from "@/src/components/GameBackground";
@@ -17,9 +17,7 @@ export default function Day() {
   const insets = useSafeAreaInsets();
   const { state, confirmVote } = useGame();
 
-  const [phase, setPhase] = useState<"summary" | "vote" | "voteReveal">(
-    "summary",
-  );
+  const [phase, setPhase] = useState<"summary" | "vote" | "voteReveal">("summary");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const night = state.nights[state.currentNight - 1];
@@ -38,6 +36,22 @@ export default function Day() {
     (hc) =>
       hc.wasWolf && hc.targetId && (night?.deaths ?? []).includes(hc.targetId),
   );
+
+  // ---- Lógica de Proteção ----
+  const protectedId = night?.protetorTarget;
+  
+  const isProtected = (id: string) => {
+    if (!protectedId) return false;
+    if (id === protectedId) return true; // É o próprio protegido
+    const target = state.players.find((p) => p.id === id);
+    if (target?.twinId === protectedId) return true; // É o gémeo do protegido
+    const prot = state.players.find((p) => p.id === protectedId);
+    if (prot?.twinId === id) return true; // O protegido é o seu gémeo
+    return false;
+  };
+
+  // Filtra os jogadores vivos para a votação, removendo os protegidos!
+  const votablePlayers = alive.filter((p) => !isProtected(p.id));
 
   useEffect(() => {
     if (state.status === "dashboard") router.replace("/dashboard");
@@ -66,10 +80,36 @@ export default function Day() {
     setPhase("voteReveal");
   };
 
+  // ---- Botão Global de Desistir ----
+  const handleQuit = () => {
+    Alert.alert(
+      "Desistir do Jogo",
+      "Tens a certeza que queres terminar este jogo de vez?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Desistir", 
+          style: "destructive", 
+          onPress: () => router.replace("/") // Volta ao ecrã inicial
+        }
+      ]
+    );
+  };
+
+  const QuitButton = () => (
+    <Pressable 
+      style={[styles.quitButton, { top: insets.top + spacing.sm }]} 
+      onPress={handleQuit}
+    >
+      <MaterialCommunityIcons name="close-circle" size={32} color={colors.onSurfaceTertiary} />
+    </Pressable>
+  );
+
   if (phase === "summary") {
     return (
       <GameBackground variant="moon">
-        <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+        <QuitButton />
+        <View style={[styles.container, { paddingTop: insets.top + spacing.xl }]}>
           <View style={styles.headerCentered}>
             <MaterialCommunityIcons name="weather-sunset-up" size={56} color={colors.gold} />
             <Text style={styles.title}>A ALDEIA{"\n"}ACORDA</Text>
@@ -135,7 +175,8 @@ export default function Day() {
   if (phase === "voteReveal") {
     return (
       <GameBackground variant="moon">
-        <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+        <QuitButton />
+        <View style={[styles.container, { paddingTop: insets.top + spacing.xl }]}>
           <View style={styles.headerCentered}>
             <MaterialCommunityIcons name="account-group" size={52} color={colors.crimson} />
             <Text style={styles.title}>{voted?.name}{"\n"}foi eliminado</Text>
@@ -175,7 +216,8 @@ export default function Day() {
 
   return (
     <GameBackground variant="moon">
-      <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+      <QuitButton />
+      <View style={[styles.container, { paddingTop: insets.top + spacing.xl }]}>
         <View style={styles.headerCentered}>
           <MaterialCommunityIcons name="gavel" size={48} color={colors.gold} />
           <Text style={styles.title}>A ALDEIA VOTA</Text>
@@ -191,7 +233,7 @@ export default function Day() {
 
         <View style={styles.flex}>
           <PlayerPicker
-            players={alive}
+            players={votablePlayers} 
             selectedId={selectedId}
             onSelect={setSelectedId}
             contentPaddingBottom={spacing.md}
@@ -216,6 +258,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, paddingHorizontal: spacing.xl },
   headerCentered: { alignItems: "center", marginBottom: spacing.lg },
+  quitButton: { position: "absolute", right: spacing.lg, zIndex: 10, opacity: 0.8 },
   title: {
     color: colors.onSurface,
     fontSize: font["3xl"],
